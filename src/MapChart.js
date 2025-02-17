@@ -322,6 +322,7 @@ const getCountryCoordinates = (countryCode) => {
     AU: [133.7751, -25.2744],
     BR: [-55.0, -10.0],
     ZA: [25.0, -29.0],
+    FR: [2.2137, 46.2276],
   };
   return coordinates[countryCode];
 };

@@ -200,6 +200,28 @@ const cryptoData = {
       { name: "XAGO", url: "https://xago.io" },
     ],
   },
+  FR: {
+    companies: [
+      { name: "Ledger", url: "https://www.ledger.com" },
+      { name: "Sorare", url: "https://sorare.com" },
+      { name: "Coinhouse", url: "https://www.coinhouse.com" },
+      { name: "Just Mining", url: "https://just-mining.com" },
+      { name: "LGO", url: "https://www.lgo.group" },
+      { name: "Kaiko", url: "https://www.kaiko.com" },
+      { name: "iExec", url: "https://iex.ec" },
+      { name: "Nomadic Labs", url: "https://www.nomadic-labs.com" },
+      { name: "Coinify France", url: "https://www.coinify.com" },
+      { name: "Paymium", url: "https://www.paymium.com" },
+      { name: "Request Network", url: "https://request.network" },
+      { name: "Lydia", url: "https://lydia-app.com" },
+      { name: "Flowdesk", url: "https://www.flowdesk.com" },
+      { name: "ACINQ", url: "https://acinq.co" },
+      { name: "Starton", url: "https://www.starton.com" },
+      { name: "Paraswap", url: "https://paraswap.io" },
+      { name: "Morpho Labs", url: "https://morpho.xyz" },
+      { name: "Angle Protocol", url: "https://angle.money" },
+    ],
+  },
 };
 
 export default cryptoData;
