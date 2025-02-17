@@ -1,5 +1,3 @@
-// src/MapChart.jsx
-
 import React, { useState, useRef } from "react";
 import {
   ComposableMap,
@@ -8,7 +6,34 @@ import {
   Marker,
   ZoomableGroup,
 } from "react-simple-maps";
+
+// d3-scale for color scale calculations
+import { scaleLinear } from "d3-scale";
+// If you want to use a predefined color palette (comment out if you prefer a custom range)
+// import { interpolateOrRd } from "d3-scale-chromatic";
+
 import getUnicodeFlagIcon from "country-flag-icons/unicode";
+
+// Helper function to get country coordinates
+const getCountryCoordinates = (countryCode) => {
+  const coordinates = {
+    US: [-95, 40],
+    JP: [138, 36],
+    GB: [-2, 54],
+    DE: [11.41, 52.52],
+    AE: [55.296233, 25.276987],
+    CH: [8.55, 47.37],
+    SG: [103.8198, 1.3521],
+    KR: [127.7669, 35.9078],
+    HK: [114.1694, 22.3193],
+    CA: [-106.3468, 56.1304],
+    AU: [133.7751, -25.2744],
+    BR: [-55.0, -10.0],
+    ZA: [25.0, -29.0],
+    FR: [2.2137, 46.2276],
+  };
+  return coordinates[countryCode];
+};
 
 const MapChart = ({ data, geoUrl }) => {
   const [tooltipContent, setTooltipContent] = useState(null);
@@ -16,9 +41,10 @@ const MapChart = ({ data, geoUrl }) => {
   const [popupData, setPopupData] = useState(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
 
-  // Added ref to keep track of the timeout for clearing the popup
+  // Ref to keep track of the timeout for clearing the popup
   const popupTimeoutRef = useRef(null);
 
+  // Handle mouse position for the tooltip
   const handleMouseMove = (event) => {
     setTooltipPosition({
       x: event.clientX,
@@ -39,7 +65,7 @@ const MapChart = ({ data, geoUrl }) => {
     setTooltipContent(null);
   };
 
-  // Updated Marker mouse enter to clear any scheduled hide timer
+  // Marker mouse enter
   const handleMarkerMouseEnter = (countryData, countryCode, event) => {
     if (popupTimeoutRef.current) {
       clearTimeout(popupTimeoutRef.current);
@@ -55,7 +81,7 @@ const MapChart = ({ data, geoUrl }) => {
     });
   };
 
-  // New functions to handle popup mouse events
+  // Popup mouse events
   const handlePopupEnter = () => {
     if (popupTimeoutRef.current) {
       clearTimeout(popupTimeoutRef.current);
@@ -73,10 +99,33 @@ const MapChart = ({ data, geoUrl }) => {
     ...Object.values(data).map((country) => country.companies.length)
   );
 
-  // Function to calculate color intensity
-  const getHeatmapColor = (companyCount) => {
-    const intensity = companyCount / maxCompanies;
-    return `rgba(255, 0, 0, ${Math.max(0.2, intensity)})`; // minimum opacity of 0.2
+  // Create a d3 color scale (light to darker color)
+  // Feel free to adjust the color range or use a different scale.
+  const colorScale = scaleLinear()
+    .domain([0, maxCompanies])
+    .range(["#f0f9ff", "#2c7fb8"]); // from light-blue-ish to a deeper teal/blue
+
+  // Alternatively, using a built-in scheme from d3-scale-chromatic:
+  // const colorScale = scaleLinear()
+  //   .domain([0, maxCompanies])
+  //   .interpolate(() => interpolateOrRd);
+
+  const getCountryFillColor = (countryCode) => {
+    const countryData = data[countryCode];
+    if (!countryData) return "#E0E0E0"; // countries with no data
+    return colorScale(countryData.companies.length);
+  };
+
+  // We can also scale the marker size to reflect the number of companies (optional)
+  // Just as an example, let's map [1..maxCompanies] to [4..10]
+  const getMarkerRadius = (numCompanies) => {
+    if (maxCompanies === 0) return 5; // fallback
+    const minRadius = 4;
+    const maxRadius = 10;
+    return (
+      minRadius +
+      ((numCompanies - 1) / (maxCompanies - 1)) * (maxRadius - minRadius)
+    );
   };
 
   return (
@@ -90,6 +139,7 @@ const MapChart = ({ data, geoUrl }) => {
         style={{
           width: "100%",
           height: "100%",
+          background: "#f8f9fa", // light background for contrast
         }}
       >
         <ZoomableGroup center={[0, 0]} zoom={1} minZoom={1} maxZoom={4}>
@@ -103,30 +153,32 @@ const MapChart = ({ data, geoUrl }) => {
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    fill={countryData ? "#F53" : "#D6D6DA"}
-                    stroke="#FFF"
-                    onMouseEnter={() =>
-                      handleMouseEnter(countryData, geo.properties.NAME)
-                    }
-                    onMouseLeave={handleMouseLeave}
+                    fill={getCountryFillColor(countryCode)}
+                    stroke="#ffffff"
                     style={{
                       default: { outline: "none" },
                       hover: {
                         outline: "none",
-                        fill: countryData ? "#F86" : "#E6E6EA",
+                        // Lighten/darken or use a small opacity change for hover
+                        fill: countryData ? "#62a8d8" : "#d0d0d0",
+                        cursor: countryData ? "pointer" : "default",
                       },
+                      pressed: { outline: "none" },
                     }}
+                    onMouseEnter={() =>
+                      handleMouseEnter(countryData, geo.properties.NAME)
+                    }
+                    onMouseLeave={handleMouseLeave}
                   />
                 );
               })
             }
           </Geographies>
 
+          {/* Marker Circles */}
           {Object.entries(data).map(([countryCode, countryData]) => {
-            // You'll need to add coordinates for each country
             const coordinates = getCountryCoordinates(countryCode);
             if (!coordinates) return null;
-
             return (
               <Marker
                 key={countryCode}
@@ -134,7 +186,6 @@ const MapChart = ({ data, geoUrl }) => {
                 onMouseEnter={(e) =>
                   handleMarkerMouseEnter(countryData, countryCode, e)
                 }
-                // Updated onMouseLeave to add a delay before closing the popup
                 onMouseLeave={() => {
                   popupTimeoutRef.current = setTimeout(
                     () => setPopupData(null),
@@ -143,21 +194,26 @@ const MapChart = ({ data, geoUrl }) => {
                 }}
               >
                 <circle
-                  r={5}
-                  fill={getHeatmapColor(countryData.companies.length)}
+                  r={getMarkerRadius(countryData.companies.length)}
+                  fill={colorScale(countryData.companies.length)}
+                  stroke="#fff"
+                  strokeWidth={1}
+                  style={{ cursor: "pointer" }}
                 />
               </Marker>
             );
           })}
         </ZoomableGroup>
       </ComposableMap>
+
+      {/* Tooltip for country hover */}
       {tooltipContent && (
         <div
           style={{
             position: "fixed",
             left: tooltipPosition.x + 10,
             top: tooltipPosition.y + 10,
-            background: "white",
+            background: "#ffffff",
             padding: "5px 10px",
             border: "1px solid #ccc",
             borderRadius: "4px",
@@ -175,6 +231,7 @@ const MapChart = ({ data, geoUrl }) => {
         </div>
       )}
 
+      {/* Popup for marker click/hover */}
       {popupData && (
         <div
           className="popup-window"
@@ -274,9 +331,6 @@ const MapChart = ({ data, geoUrl }) => {
                     color: "#333",
                     transition: "all 0.2s ease",
                     cursor: "pointer",
-                    "&:hover": {
-                      background: "#f0f0f0",
-                    },
                   }}
                 >
                   <a
@@ -304,27 +358,6 @@ const MapChart = ({ data, geoUrl }) => {
       )}
     </div>
   );
-};
-
-// Helper function to get country coordinates
-const getCountryCoordinates = (countryCode) => {
-  const coordinates = {
-    US: [-95, 40],
-    JP: [138, 36],
-    GB: [-2, 54],
-    DE: [11.41, 52.52],
-    AE: [55.296233, 25.276987],
-    CH: [8.55, 47.37],
-    SG: [103.8198, 1.3521],
-    KR: [127.7669, 35.9078],
-    HK: [114.1694, 22.3193],
-    CA: [-106.3468, 56.1304],
-    AU: [133.7751, -25.2744],
-    BR: [-55.0, -10.0],
-    ZA: [25.0, -29.0],
-    FR: [2.2137, 46.2276],
-  };
-  return coordinates[countryCode];
 };
 
 export default MapChart;
