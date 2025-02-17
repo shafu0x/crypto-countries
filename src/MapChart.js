@@ -111,13 +111,6 @@ const MapChart = ({ data, geoUrl }) => {
                   r={5}
                   fill={getHeatmapColor(countryData.companies.length)}
                 />
-                <text
-                  textAnchor="middle"
-                  y={-10}
-                  style={{ fontSize: "8px", fill: "#000" }}
-                >
-                  {`${countryData.companies.length} companies`}
-                </text>
               </Marker>
             );
           })}
@@ -188,6 +181,8 @@ const getCountryCoordinates = (countryCode) => {
     US: [-95, 40],
     JP: [138, 36],
     GB: [-2, 54],
+    DE: [11.41, 52.52],
+    AE: [55.296233, 25.276987],
     // Add more country coordinates as needed
   };
   return coordinates[countryCode];

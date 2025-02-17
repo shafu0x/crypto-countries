@@ -2,18 +2,29 @@
 
 const cryptoData = {
   US: {
-    count: 45,
     companies: ["Coinbase", "Kraken", "Gemini", "Test"],
   },
   JP: {
-    count: 30,
     companies: ["bitFlyer", "Coincheck"],
   },
   GB: {
-    count: 20,
+    companies: [
+      "Aztec",
+      "Aave",
+      "Euler",
+      "rhinestone",
+      "argent",
+      "hyperlane",
+      "wintermute",
+      "pumpdotfun",
+    ],
+  },
+  DE: {
     companies: ["Bitstamp", "Blockchain.com"],
   },
-  // ... more countries
+  AE: {
+    companies: ["biconomy", "AvailProject", "0xfluid", "bybit"],
+  },
 };
 
 export default cryptoData;
