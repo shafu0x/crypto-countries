@@ -16,6 +16,9 @@ const MapChart = ({ data, geoUrl }) => {
   const [popupData, setPopupData] = useState(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
 
+  // Added ref to keep track of the timeout for clearing the popup
+  const popupTimeoutRef = useRef(null);
+
   const handleMouseMove = (event) => {
     setTooltipPosition({
       x: event.clientX,
@@ -36,8 +39,11 @@ const MapChart = ({ data, geoUrl }) => {
     setTooltipContent(null);
   };
 
+  // Updated Marker mouse enter to clear any scheduled hide timer
   const handleMarkerMouseEnter = (countryData, countryCode, event) => {
-    // Get marker position relative to the map
+    if (popupTimeoutRef.current) {
+      clearTimeout(popupTimeoutRef.current);
+    }
     const rect = event.target.getBoundingClientRect();
     setPopupPosition({
       x: rect.left + rect.width / 2,
@@ -47,6 +53,19 @@ const MapChart = ({ data, geoUrl }) => {
       ...countryData,
       countryCode,
     });
+  };
+
+  // New functions to handle popup mouse events
+  const handlePopupEnter = () => {
+    if (popupTimeoutRef.current) {
+      clearTimeout(popupTimeoutRef.current);
+    }
+  };
+
+  const handlePopupLeave = () => {
+    popupTimeoutRef.current = setTimeout(() => {
+      setPopupData(null);
+    }, 200);
   };
 
   // Calculate the maximum number of companies for color scaling
@@ -105,7 +124,13 @@ const MapChart = ({ data, geoUrl }) => {
                 onMouseEnter={(e) =>
                   handleMarkerMouseEnter(countryData, countryCode, e)
                 }
-                onMouseLeave={() => setPopupData(null)}
+                // Updated onMouseLeave to add a delay before closing the popup
+                onMouseLeave={() => {
+                  popupTimeoutRef.current = setTimeout(
+                    () => setPopupData(null),
+                    200
+                  );
+                }}
               >
                 <circle
                   r={5}
@@ -143,28 +168,37 @@ const MapChart = ({ data, geoUrl }) => {
       {popupData && (
         <div
           className="popup-window"
+          onMouseEnter={handlePopupEnter} // added handler to cancel popup removal
+          onMouseLeave={handlePopupLeave} // added handler to delay closing popup
           style={{
             position: "fixed",
             left: `${popupPosition.x}px`,
             top: `${popupPosition.y - 10}px`,
             transform: "translate(-50%, -100%)",
             background: "#fff",
-            padding: "0.5rem",
-            borderRadius: "4px",
-            minWidth: "150px",
+            padding: "1rem", // updated padding for better spacing
+            borderRadius: "8px", // increased border radius for a softer look
+            minWidth: "200px", // increased width for more content space
             maxWidth: "300px",
             maxHeight: "200px",
             overflowY: "auto",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.15)", // updated shadow for depth
             zIndex: 1000,
-            fontSize: "12px",
+            fontSize: "14px", // increased font size for readability
+            transition: "opacity 0.3s ease, transform 0.3s ease",
           }}
         >
-          <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "14px" }}>
+          <h3
+            style={{
+              margin: "0 0 0.5rem 0",
+              fontSize: "16px", // larger header font
+              color: "#333", // improved header color
+            }}
+          >
             Companies in {getUnicodeFlagIcon(popupData.countryCode)}{" "}
             {popupData.countryCode}
           </h3>
-          <ul style={{ margin: 0, paddingLeft: "20px" }}>
+          <ul style={{ margin: 0, paddingLeft: "20px", lineHeight: "1.5" }}>
             {popupData.companies.map((company, index) => (
               <li key={index}>{company}</li>
             ))}
@@ -183,6 +217,7 @@ const getCountryCoordinates = (countryCode) => {
     GB: [-2, 54],
     DE: [11.41, 52.52],
     AE: [55.296233, 25.276987],
+    CH: [8.55, 47.37],
     // Add more country coordinates as needed
   };
   return coordinates[countryCode];

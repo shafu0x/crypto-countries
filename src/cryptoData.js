@@ -22,8 +22,37 @@ const cryptoData = {
   DE: {
     companies: ["Bitstamp", "Blockchain.com"],
   },
+  CH: {
+    companies: [
+      "ethereum",
+      "0xPolygonFdn",
+      "AragonProject",
+      "Dune",
+      "CurveFinance",
+      "gelatonetwork",
+      "ArrakisFinance",
+      "anoma",
+      "LiquityProtocol",
+      "SteakhouseFi",
+    ],
+  },
   AE: {
-    companies: ["biconomy", "AvailProject", "0xfluid", "bybit"],
+    companies: [
+      "biconomy",
+      "AvailProject",
+      "0xfluid",
+      "bybit",
+      "SpheronFDN",
+      "beradigm_xyz",
+      "forma",
+      "Polytrade_fin",
+      "0xPolygon",
+      "heliuslabs",
+      "auroraisnear",
+      "pStakeFinance",
+      "SOCKETProtocol",
+      "CopperxHQ",
+    ],
   },
 };
 
