@@ -1,23 +1,17 @@
-import logo from './logo.svg';
-import './App.css';
+// src/App.js
+
+import React from "react";
+import MapChart from "./MapChart";
+import cryptoData from "./cryptoData";
+
+// We assume the file is stored in src, so we can import it directly if it's a small enough file
+import geoData from "./world-geo.json";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <h1>Crypto Companies Map</h1>
+      <MapChart data={cryptoData} geoUrl={geoData} />
     </div>
   );
 }
