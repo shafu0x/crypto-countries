@@ -117,7 +117,7 @@ const MapChart = ({ data, geoUrl }) => {
   // Feel free to adjust the color range or use a different scale.
   const colorScale = scaleLinear()
     .domain([0, maxCompanies])
-    .range(["#f0f9ff", "#2c7fb8"]); // from light-blue-ish to a deeper teal/blue
+    .range(["#0a192f", "#00b36b"]); // from dark blue to darker green
 
   // Alternatively, using a built-in scheme from d3-scale-chromatic:
   // const colorScale = scaleLinear()
@@ -166,7 +166,7 @@ const MapChart = ({ data, geoUrl }) => {
         width: "100%",
         height: "100vh",
         position: "relative",
-        background: "#1a1a2e",
+        background: "linear-gradient(to bottom, #0a192f 0%, #000000 100%)",
       }}
     >
       <ComposableMap
@@ -177,9 +177,23 @@ const MapChart = ({ data, geoUrl }) => {
           center: [0, 0],
           rotate: [-10, 0, 0],
         }}
-        style={{ width: "100%", height: "100%", background: "#1a1a2e" }}
+        style={{
+          width: "100%",
+          height: "100%",
+          background: "transparent",
+        }}
       >
         <ZoomableGroup center={[0, 0]} zoom={1} minZoom={1} maxZoom={4}>
+          {/* Add a glowing grid effect */}
+          <rect
+            x="-5000"
+            y="-5000"
+            width="10000"
+            height="10000"
+            fill="url(#grid-pattern)"
+            opacity="0.1"
+          />
+
           <Geographies geography={geoUrl}>
             {({ geographies }) =>
               geographies.map((geo) => {
@@ -191,14 +205,15 @@ const MapChart = ({ data, geoUrl }) => {
                     key={geo.rsmKey}
                     geography={geo}
                     fill={getCountryFillColor(countryCode)}
-                    stroke="#ffffff"
+                    stroke="#00b36b"
+                    strokeWidth={0.2}
                     style={{
                       default: { outline: "none" },
                       hover: {
                         outline: "none",
-                        // Lighten/darken or use a small opacity change for hover
-                        fill: countryData ? "#62a8d8" : "#d0d0d0",
+                        fill: countryData ? "#00cc7a" : "#1a2634",
                         cursor: countryData ? "pointer" : "default",
+                        filter: "drop-shadow(0 0 8px rgba(0, 179, 107, 0.5))",
                       },
                       pressed: { outline: "none" },
                     }}
@@ -212,7 +227,7 @@ const MapChart = ({ data, geoUrl }) => {
             }
           </Geographies>
 
-          {/* Marker Circles */}
+          {/* Update Markers */}
           {Object.entries(data).map(([countryCode, countryData]) => {
             const coordinates = getCountryCoordinates(countryCode);
             if (!coordinates) return null;
@@ -236,64 +251,95 @@ const MapChart = ({ data, geoUrl }) => {
                 }}
               >
                 <g>
-                  {/* Glow effect */}
+                  {/* Enhanced glow effect */}
                   <circle
-                    r={circleSize + 4}
+                    r={circleSize + 6}
                     fill="none"
-                    stroke="rgba(255, 75, 75, 0.2)"
+                    stroke="rgba(0, 255, 157, 0.2)"
                     strokeWidth={4}
-                    style={{ filter: "blur(4px)" }}
+                    style={{ filter: "blur(6px)" }}
+                  />
+                  <circle
+                    r={circleSize + 2}
+                    fill="none"
+                    stroke="rgba(0, 255, 157, 0.4)"
+                    strokeWidth={2}
+                    style={{ filter: "blur(2px)" }}
                   />
                   {/* Main circle */}
                   <circle
                     r={circleSize}
-                    fill="url(#gradientCircle)"
-                    stroke="#FFFFFF"
+                    fill="url(#cyberGradient)"
+                    stroke="#00ff9d"
                     strokeWidth={1.5}
                     opacity={0.9}
                     style={{
                       cursor: "pointer",
                       transition: "all 0.3s ease",
-                      filter: "drop-shadow(0 0 4px rgba(255, 75, 75, 0.3))",
+                      filter: "drop-shadow(0 0 6px rgba(0, 255, 157, 0.5))",
                     }}
                   />
                 </g>
               </Marker>
             );
           })}
+
+          {/* Add new gradients and patterns */}
           <defs>
-            <radialGradient id="gradientCircle" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#FF6B6B" />
-              <stop offset="100%" stopColor="#FF4B4B" />
+            <radialGradient id="cyberGradient" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#00cc7a" />
+              <stop offset="100%" stopColor="#00b36b" />
             </radialGradient>
+
+            <pattern
+              id="grid-pattern"
+              width="40"
+              height="40"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d="M 40 0 L 0 0 0 40"
+                fill="none"
+                stroke="#00b36b"
+                strokeWidth="0.5"
+                opacity="0.3"
+              />
+            </pattern>
           </defs>
         </ZoomableGroup>
       </ComposableMap>
 
-      {/* Tooltip for country hover */}
+      {/* Update tooltip style */}
       {tooltipContent && (
         <div
           style={{
             position: "fixed",
             left: "10px",
             top: "10px",
-            background: "#fff",
+            background: "rgba(10, 25, 47, 0.95)",
             padding: "1rem",
             borderRadius: "8px",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            boxShadow: "0 0 20px rgba(0, 255, 157, 0.2)",
             fontSize: "14px",
+            color: "#fff",
+            border: "1px solid #00b36b",
+            backdropFilter: "blur(5px)",
           }}
         >
-          <h4 style={{ margin: "0 0 5px 0" }}>{tooltipContent.countryName}</h4>
+          <h4 style={{ margin: "0 0 5px 0", color: "#00b36b" }}>
+            {tooltipContent.countryName}
+          </h4>
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {tooltipContent.companies.map((company, index) => (
-              <li key={index}>{company.name}</li>
+              <li key={index} style={{ color: "#fff" }}>
+                {company.name}
+              </li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* Popup for marker click/hover */}
+      {/* Update popup style */}
       {popupData && (
         <div
           className="popup-window"
@@ -304,18 +350,19 @@ const MapChart = ({ data, geoUrl }) => {
             left: `${leftPosition}px`,
             top: `${topPosition}px`,
             transform: `translate(-50%, ${popupWillBeAbove ? "-100%" : "0"})`,
-            background: "#fff",
+            background: "rgba(10, 25, 47, 0.95)",
             padding: "1.5rem",
             borderRadius: "12px",
             minWidth: "280px",
             maxWidth: "350px",
             maxHeight: `${calculatedPopupHeight}px`,
             overflowY: "auto",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+            boxShadow: "0 0 30px rgba(0, 255, 157, 0.2)",
             zIndex: 1000,
             fontSize: "14px",
-            border: "1px solid rgba(0,0,0,0.1)",
-            transition: "all 0.3s ease",
+            border: "1px solid #00ff9d",
+            backdropFilter: "blur(10px)",
+            color: "#fff",
           }}
         >
           <div
@@ -324,8 +371,9 @@ const MapChart = ({ data, geoUrl }) => {
               alignItems: "center",
               marginBottom: "1rem",
               padding: "0.5rem",
-              background: "#f8f9fa",
+              background: "rgba(255, 255, 255, 0.05)",
               borderRadius: "8px",
+              border: "1px solid rgba(0, 255, 157, 0.5)",
             }}
           >
             <span
@@ -342,7 +390,7 @@ const MapChart = ({ data, geoUrl }) => {
                   margin: "0",
                   fontSize: "1.2rem",
                   fontWeight: "600",
-                  color: "#1a1a1a",
+                  color: "#ffffff",
                 }}
               >
                 {popupData.countryName}
@@ -350,7 +398,7 @@ const MapChart = ({ data, geoUrl }) => {
               <p
                 style={{
                   margin: "0.2rem 0 0 0",
-                  color: "#666",
+                  color: "#00b36b",
                   fontSize: "0.9rem",
                 }}
               >
@@ -360,7 +408,7 @@ const MapChart = ({ data, geoUrl }) => {
           </div>
           <div
             style={{
-              background: "#fff",
+              background: "transparent",
               borderRadius: "8px",
               padding: "0.5rem",
             }}
@@ -380,11 +428,16 @@ const MapChart = ({ data, geoUrl }) => {
                   style={{
                     padding: "0.5rem 0.75rem",
                     borderRadius: "6px",
-                    background: "#f8f9fa",
+                    background: "rgba(255, 255, 255, 0.05)",
                     fontSize: "0.9rem",
-                    color: "#333",
-                    transition: "background-color 0.2s ease",
+                    color: "#fff",
+                    transition: "all 0.2s ease",
                     cursor: "default",
+                    border: "1px solid rgba(0, 255, 157, 0.3)",
+                    "&:hover": {
+                      background: "rgba(0, 255, 157, 0.1)",
+                      borderColor: "#00ff9d",
+                    },
                   }}
                 >
                   <a
@@ -392,7 +445,7 @@ const MapChart = ({ data, geoUrl }) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      color: "#333",
+                      color: "#00b36b",
                       textDecoration: "none",
                       display: "block",
                       width: "100%",
