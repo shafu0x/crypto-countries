@@ -10,7 +10,6 @@ import geoData from "./world-geo.json";
 function App() {
   return (
     <div>
-      <h1>Crypto Companies Map</h1>
       <MapChart data={cryptoData} geoUrl={geoData} />
     </div>
   );

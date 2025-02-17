@@ -80,9 +80,19 @@ const MapChart = ({ data, geoUrl }) => {
   };
 
   return (
-    <div style={{ width: "100%", height: "500px", position: "relative" }}>
-      <ComposableMap onMouseMove={handleMouseMove}>
-        <ZoomableGroup>
+    <div style={{ width: "100%", height: "100vh", position: "relative" }}>
+      <ComposableMap
+        onMouseMove={handleMouseMove}
+        projection="geoEquirectangular"
+        projectionConfig={{
+          scale: 150,
+        }}
+        style={{
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        <ZoomableGroup center={[0, 0]} zoom={1} minZoom={1} maxZoom={4}>
           <Geographies geography={geoUrl}>
             {({ geographies }) =>
               geographies.map((geo) => {
@@ -168,41 +178,128 @@ const MapChart = ({ data, geoUrl }) => {
       {popupData && (
         <div
           className="popup-window"
-          onMouseEnter={handlePopupEnter} // added handler to cancel popup removal
-          onMouseLeave={handlePopupLeave} // added handler to delay closing popup
+          onMouseEnter={handlePopupEnter}
+          onMouseLeave={handlePopupLeave}
           style={{
             position: "fixed",
-            left: `${popupPosition.x}px`,
-            top: `${popupPosition.y - 10}px`,
-            transform: "translate(-50%, -100%)",
+            left: `${Math.min(
+              Math.max(popupPosition.x, 175),
+              window.innerWidth - 175
+            )}px`,
+            top: `${Math.min(
+              Math.max(popupPosition.y - 10, 100),
+              window.innerHeight - 20
+            )}px`,
+            transform: `translate(-50%, ${
+              popupPosition.y > window.innerHeight - 200 ? "0" : "-100%"
+            })`,
             background: "#fff",
-            padding: "1rem", // updated padding for better spacing
-            borderRadius: "8px", // increased border radius for a softer look
-            minWidth: "200px", // increased width for more content space
-            maxWidth: "300px",
-            maxHeight: "200px",
+            padding: "1.5rem",
+            borderRadius: "12px",
+            minWidth: "280px",
+            maxWidth: "350px",
+            maxHeight: `${Math.min(400, window.innerHeight - 40)}px`,
             overflowY: "auto",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.15)", // updated shadow for depth
+            boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
             zIndex: 1000,
-            fontSize: "14px", // increased font size for readability
-            transition: "opacity 0.3s ease, transform 0.3s ease",
+            fontSize: "14px",
+            border: "1px solid rgba(0,0,0,0.1)",
+            transition: "all 0.3s ease",
           }}
         >
-          <h3
+          <div
             style={{
-              margin: "0 0 0.5rem 0",
-              fontSize: "16px", // larger header font
-              color: "#333", // improved header color
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "1rem",
+              padding: "0.5rem",
+              background: "#f8f9fa",
+              borderRadius: "8px",
             }}
           >
-            Companies in {getUnicodeFlagIcon(popupData.countryCode)}{" "}
-            {popupData.countryCode}
-          </h3>
-          <ul style={{ margin: 0, paddingLeft: "20px", lineHeight: "1.5" }}>
-            {popupData.companies.map((company, index) => (
-              <li key={index}>{company}</li>
-            ))}
-          </ul>
+            <span
+              style={{
+                fontSize: "2.5rem",
+                marginRight: "1rem",
+              }}
+            >
+              {getUnicodeFlagIcon(popupData.countryCode)}
+            </span>
+            <div>
+              <h3
+                style={{
+                  margin: "0",
+                  fontSize: "1.2rem",
+                  fontWeight: "600",
+                  color: "#1a1a1a",
+                }}
+              >
+                {popupData.countryCode}
+              </h3>
+              <p
+                style={{
+                  margin: "0.2rem 0 0 0",
+                  color: "#666",
+                  fontSize: "0.9rem",
+                }}
+              >
+                {popupData.companies.length} Companies
+              </p>
+            </div>
+          </div>
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "8px",
+              padding: "0.5rem",
+            }}
+          >
+            <ul
+              style={{
+                margin: 0,
+                padding: 0,
+                listStyle: "none",
+                display: "grid",
+                gap: "0.5rem",
+              }}
+            >
+              {popupData.companies.map((company, index) => (
+                <li
+                  key={index}
+                  style={{
+                    padding: "0.5rem 0.75rem",
+                    borderRadius: "6px",
+                    background: "#f8f9fa",
+                    fontSize: "0.9rem",
+                    color: "#333",
+                    transition: "all 0.2s ease",
+                    cursor: "pointer",
+                    "&:hover": {
+                      background: "#f0f0f0",
+                    },
+                  }}
+                >
+                  <a
+                    href={company.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: "#333",
+                      textDecoration: "none",
+                      display: "block",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                  >
+                    {company.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
     </div>
@@ -218,7 +315,13 @@ const getCountryCoordinates = (countryCode) => {
     DE: [11.41, 52.52],
     AE: [55.296233, 25.276987],
     CH: [8.55, 47.37],
-    // Add more country coordinates as needed
+    SG: [103.8198, 1.3521],
+    KR: [127.7669, 35.9078],
+    HK: [114.1694, 22.3193],
+    CA: [-106.3468, 56.1304],
+    AU: [133.7751, -25.2744],
+    BR: [-55.0, -10.0],
+    ZA: [25.0, -29.0],
   };
   return coordinates[countryCode];
 };
