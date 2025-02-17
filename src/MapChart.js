@@ -14,6 +14,25 @@ import { scaleLinear } from "d3-scale";
 
 import getUnicodeFlagIcon from "country-flag-icons/unicode";
 
+// Mapping of ISO country codes to their real names
+const countryNames = {
+  US: "United States",
+  JP: "Japan",
+  GB: "United Kingdom",
+  DE: "Germany",
+  AE: "United Arab Emirates",
+  CH: "Switzerland",
+  SG: "Singapore",
+  KR: "South Korea",
+  HK: "Hong Kong",
+  CA: "Canada",
+  AU: "Australia",
+  BR: "Brazil",
+  ZA: "South Africa",
+  FR: "France",
+  ES: "Spain",
+};
+
 // Helper function to get country coordinates
 const getCountryCoordinates = (countryCode) => {
   const coordinates = {
@@ -31,6 +50,7 @@ const getCountryCoordinates = (countryCode) => {
     BR: [-55.0, -10.0],
     ZA: [25.0, -29.0],
     FR: [2.2137, 46.2276],
+    ES: [-3.75, 40],
   };
   return coordinates[countryCode];
 };
@@ -70,15 +90,9 @@ const MapChart = ({ data, geoUrl }) => {
     if (popupTimeoutRef.current) {
       clearTimeout(popupTimeoutRef.current);
     }
-    const rect = event.target.getBoundingClientRect();
-    setPopupPosition({
-      x: rect.left + rect.width / 2,
-      y: rect.top,
-    });
-    setPopupData({
-      ...countryData,
-      countryCode,
-    });
+    const realName = countryNames[countryCode] || countryCode;
+    setPopupData({ ...countryData, countryCode, countryName: realName });
+    setPopupPosition({ x: event.clientX, y: event.clientY });
   };
 
   // Popup mouse events
@@ -128,19 +142,42 @@ const MapChart = ({ data, geoUrl }) => {
     );
   };
 
+  // Calculate popup positioning to ensure it remains on screen
+  const popupWidth = 350; // maximum popup width
+  const margin = 10; // viewport margin
+  const calculatedPopupHeight = Math.min(400, window.innerHeight - 40);
+  const popupWillBeAbove =
+    popupData && popupPosition.y - calculatedPopupHeight - margin >= 0;
+  const leftPosition = Math.min(
+    Math.max(popupPosition.x, popupWidth / 2 + margin),
+    window.innerWidth - popupWidth / 2 - margin
+  );
+  const rawTop = popupWillBeAbove
+    ? popupPosition.y - margin
+    : popupPosition.y + margin;
+  const topPosition = Math.min(
+    Math.max(rawTop, margin),
+    window.innerHeight - calculatedPopupHeight - margin
+  );
+
   return (
-    <div style={{ width: "100%", height: "100vh", position: "relative" }}>
+    <div
+      style={{
+        width: "100%",
+        height: "100vh",
+        position: "relative",
+        background: "#1a1a2e",
+      }}
+    >
       <ComposableMap
         onMouseMove={handleMouseMove}
         projection="geoEquirectangular"
         projectionConfig={{
           scale: 150,
+          center: [0, 0],
+          rotate: [-10, 0, 0],
         }}
-        style={{
-          width: "100%",
-          height: "100%",
-          background: "#f8f9fa", // light background for contrast
-        }}
+        style={{ width: "100%", height: "100%", background: "#1a1a2e" }}
       >
         <ZoomableGroup center={[0, 0]} zoom={1} minZoom={1} maxZoom={4}>
           <Geographies geography={geoUrl}>
@@ -179,6 +216,11 @@ const MapChart = ({ data, geoUrl }) => {
           {Object.entries(data).map(([countryCode, countryData]) => {
             const coordinates = getCountryCoordinates(countryCode);
             if (!coordinates) return null;
+            const numberOfCompanies = countryData.companies.length;
+            const circleSize = Math.min(
+              Math.max(Math.sqrt(numberOfCompanies) * 2, 4),
+              12
+            );
             return (
               <Marker
                 key={countryCode}
@@ -193,16 +235,38 @@ const MapChart = ({ data, geoUrl }) => {
                   );
                 }}
               >
-                <circle
-                  r={getMarkerRadius(countryData.companies.length)}
-                  fill={colorScale(countryData.companies.length)}
-                  stroke="#fff"
-                  strokeWidth={1}
-                  style={{ cursor: "pointer" }}
-                />
+                <g>
+                  {/* Glow effect */}
+                  <circle
+                    r={circleSize + 4}
+                    fill="none"
+                    stroke="rgba(255, 75, 75, 0.2)"
+                    strokeWidth={4}
+                    style={{ filter: "blur(4px)" }}
+                  />
+                  {/* Main circle */}
+                  <circle
+                    r={circleSize}
+                    fill="url(#gradientCircle)"
+                    stroke="#FFFFFF"
+                    strokeWidth={1.5}
+                    opacity={0.9}
+                    style={{
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                      filter: "drop-shadow(0 0 4px rgba(255, 75, 75, 0.3))",
+                    }}
+                  />
+                </g>
               </Marker>
             );
           })}
+          <defs>
+            <radialGradient id="gradientCircle" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#FF6B6B" />
+              <stop offset="100%" stopColor="#FF4B4B" />
+            </radialGradient>
+          </defs>
         </ZoomableGroup>
       </ComposableMap>
 
@@ -211,21 +275,19 @@ const MapChart = ({ data, geoUrl }) => {
         <div
           style={{
             position: "fixed",
-            left: tooltipPosition.x + 10,
-            top: tooltipPosition.y + 10,
-            background: "#ffffff",
-            padding: "5px 10px",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            pointerEvents: "none",
-            zIndex: 1000,
+            left: "10px",
+            top: "10px",
+            background: "#fff",
+            padding: "1rem",
+            borderRadius: "8px",
             boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            fontSize: "14px",
           }}
         >
           <h4 style={{ margin: "0 0 5px 0" }}>{tooltipContent.countryName}</h4>
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {tooltipContent.companies.map((company, index) => (
-              <li key={index}>{company}</li>
+              <li key={index}>{company.name}</li>
             ))}
           </ul>
         </div>
@@ -239,23 +301,15 @@ const MapChart = ({ data, geoUrl }) => {
           onMouseLeave={handlePopupLeave}
           style={{
             position: "fixed",
-            left: `${Math.min(
-              Math.max(popupPosition.x, 175),
-              window.innerWidth - 175
-            )}px`,
-            top: `${Math.min(
-              Math.max(popupPosition.y - 10, 100),
-              window.innerHeight - 20
-            )}px`,
-            transform: `translate(-50%, ${
-              popupPosition.y > window.innerHeight - 200 ? "0" : "-100%"
-            })`,
+            left: `${leftPosition}px`,
+            top: `${topPosition}px`,
+            transform: `translate(-50%, ${popupWillBeAbove ? "-100%" : "0"})`,
             background: "#fff",
             padding: "1.5rem",
             borderRadius: "12px",
             minWidth: "280px",
             maxWidth: "350px",
-            maxHeight: `${Math.min(400, window.innerHeight - 40)}px`,
+            maxHeight: `${calculatedPopupHeight}px`,
             overflowY: "auto",
             boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
             zIndex: 1000,
@@ -291,7 +345,7 @@ const MapChart = ({ data, geoUrl }) => {
                   color: "#1a1a1a",
                 }}
               >
-                {popupData.countryCode}
+                {popupData.countryName}
               </h3>
               <p
                 style={{
@@ -329,8 +383,8 @@ const MapChart = ({ data, geoUrl }) => {
                     background: "#f8f9fa",
                     fontSize: "0.9rem",
                     color: "#333",
-                    transition: "all 0.2s ease",
-                    cursor: "pointer",
+                    transition: "background-color 0.2s ease",
+                    cursor: "default",
                   }}
                 >
                   <a

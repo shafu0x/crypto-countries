@@ -222,6 +222,15 @@ const cryptoData = {
       { name: "Angle Protocol", url: "https://angle.money" },
     ],
   },
+  ES: {
+    companies: [
+      { name: "Bit2Me", url: "https://bit2me.com" },
+      { name: "Bitnovo", url: "https://www.bitnovo.com" },
+      { name: "InbestMe", url: "https://inbestme.com" },
+      { name: "Criptan", url: "https://www.criptan.com" },
+      { name: "Debitum Network", url: "https://www.debitum.network" },
+    ],
+  },
 };
 
 export default cryptoData;
