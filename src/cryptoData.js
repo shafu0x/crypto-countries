@@ -3,6 +3,7 @@
 const cryptoData = {
   US: {
     companies: [
+      { name: "Spearbit", url: "https://www.spearbit.com" },
       { name: "Coinbase", url: "https://www.coinbase.com" },
       { name: "Kraken", url: "https://www.kraken.com" },
       { name: "Gemini", url: "https://www.gemini.com" },
